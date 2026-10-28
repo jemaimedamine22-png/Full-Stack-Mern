@@ -1,0 +1,47 @@
+name: MERN CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ] # سيعمل تلقائياً عند الرفع على فرع main
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. سحب الكود من المستودع
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. إعداد بيئة Node.js (متوافقة مع نسختك 22)
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # 3. تثبيت تبعيات وبناء الـ Backend
+      - name: Install & Build Backend
+        run: |
+          cd backend
+          npm install
+
+      # 4. تثبيت تبعيات وبناء الـ Frontend (Vite)
+      - name: Install & Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      # 5. اختبار بناء حاويات Docker للتأكد من أن كل شيء سليماً للـ Production
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Images (Dry Run)
+        run: |
+          docker compose build
